@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import MarsWeatherCard from './component/marsWeather';
+import PictureOfTheDay from './component/PictureOfTheDay';
 
 export default function App() {
   const [temperature, setTemperature] = useState(null);
   const [wind, setWind] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [picture, setPicture] = useState(null);
 
   useEffect(() => {
     async function fetchMarsWeather() {
@@ -39,23 +42,40 @@ export default function App() {
     fetchMarsWeather();
   }, []);
 
+  useEffect(() => {
+    async function fecthPictureOfTheDay(){
+      try{
+        const apiKey = import.meta.env.VITE_NASA_API_KEY;
+        const response = await fetch(
+          `https://api.nasa.gov/planetary/apod?api_key=${apiKey}`
+        );
+        if (!response.ok) {
+          throw new Error('Erreur lors de la récupération des données');
+        }
+        const data = await response.json();
+        setPicture(data);
+      } catch (err) {
+        setError(err.message);
+      }finally {
+        setLoading(false);
+      }
+    }
+    fecthPictureOfTheDay();
+  }, []);
+
   if (loading) return <p>Chargement...</p>;
   if (error) return <p>Erreur: {error}</p>;
 
   return (
-    <div>
-      <h1>Mars</h1>
-      <h2>Température sur mars</h2>
-      {temperature !== null ? (
-        <p>{temperature.toFixed(1)} °C</p> // arrondis 1 chiffre après la virgule
-      ) : (
-        <p>Données non disponibles</p>
-      )}
-      <h2>Vent sur Mars</h2>
-      {wind !== null ?(
-        <p>{wind.toFixed(2)} m/s</p>
-      ) : (<p>Données non disponibles</p>)}
-    </div>
+    <>
+      <div>
+        <MarsWeatherCard title = "Température sur mars" value={temperature.toFixed(1)} unit="°C" />
+        <MarsWeatherCard title = "Vent sur mars" value={wind.toFixed(2)} unit={"m/s"} />
+      </div>
+      <div>
+        <PictureOfTheDay picture={picture} />
+      </div>
+    </>
   );
 }
 
